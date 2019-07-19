@@ -1,0 +1,130 @@
+Sub VBA()
+'----------------------
+' For every work sheet
+'----------------------
+
+Dim ws As Worksheet
+
+For Each ws In Worksheets
+    ws.Activate
+
+'-----------------------------------------
+
+    RowCount = Cells(Rows.Count, "A").End(xlUp).Row     ' Creating a RowCount to count all values within a specific column "A"
+
+    j = 0   ' used as a variable to insert the unique tickers and aggregated volumes into one cell respectfully.
+    yrop = 1 ' place holder value for yearly open price for particular tickers
+    yrcl = 1 ' place holder value for yearly close price for particular tickers
+    
+    Cells(1, "I").Value = "<ticker>" ' Used to create a header for the unique tickers
+    Cells(1, "J").Value = "<Total stock volume>" ' Used to create a header for the Total Stock Volume for each Ticker
+    Cells(1, "K").Value = "<Yearly Open>" 'Column title for every tickers yearly open
+    Cells(1, "L").Value = "<Yearly Close>" 'Column title for every tickers yearly close
+    Cells(1, "M").Value = "<Yearly Change>" 'Column title for every tickers yearly change
+    Cells(1, "N").Value = "<Yearly Percent Change>" 'Column title for every tickers yearly percentage change
+    Cells(1, "Q").Value = "<Ticker>" 'Table title for a particular values ticker
+    Cells(1, "R").Value = "<Value>" 'Table title for every value associated with the ticker
+    Cells(2, "P").Value = "<Greatest % Increase>" 'Table title for the ticker with the greatest % increase
+    Cells(3, "P").Value = "<Greatest % Decrease>" 'Table title for the ticker with the lowest % increase
+    Cells(4, "P").Value = "<Greatest Total Volume>" 'Table title for the ticker with the greatest total volume
+    
+    For i = 1 To RowCount    'Using a For loop to iterate through column A, so we can retrieve unique ticker values and the aggregate of total stock volume
+
+        If Cells(i, "A").Value <> Cells(i + 1, "A").Value Then ' If the ticker does not equal the next ticker
+
+            j = j + 1 ' Record a the next J value everytime we have a new ticker so we can place unique ticker values and aggregate values of the total stock volume
+
+            Cells(j, "I").Value = Cells(i, "A").Value   ' This places the unique ticker value into the proper cell when we approach a new ticker
+  
+   
+        Else ' Else so we can add up the aggregate total stock volume for each ticker
+
+            Cells(j + 1, "J").Value = Cells(i + 1, "G").Value + Cells(j + 1, "J").Value ' Repeated addition for summing the total stock volume of each ticker
+
+        End If
+    
+        '--- Another IF statement for yearly change and percent change
+        If Right(Cells(i, "B").Value, 4) = "0101" Then ' Collecting the yearly open value for a ticker
+            yrop = Cells(i, "C").Value
+        End If
+        
+        If Right(Cells(i + 1, "B").Value, 4) = "1230" Then
+           yrcl = Cells(i, "F").Value  ' Collecting the yearly close value for a ticker
+        End If
+        '---
+        
+        Cells(j + 1, "K").Value = yrop ' calculating the difference between the yearly open and close
+        
+        Cells(j + 1, "L").Value = yrcl '(yrcl - yrop) / yrop  calculating the precentage change between yearly open and close
+        
+        Cells(j + 1, "M").Value = yrcl - yrop ' Yearly difference
+        
+        Cells(j + 1, "N").Value = (yrcl - yrop) / yrop ' Percent change
+            
+    Next i ' Next iteration
+    
+'------------------------------------------------------
+RowCountN = Cells(Rows.Count, "N").End(xlUp).Row ' RowCount for the column N
+    
+greatest_value = 0 'Place holder value for the greatest % value
+greatest_value_ticker = 0 'Place holder value for the greatest % value ticker
+lowest_value = 0 'Place holder value for the lowest % value
+lowest_value_ticker = 0 'Place holder value for the greatest % value ticker
+
+greatest_stock_volume = 0 'Place holder value for the greatest stock volume
+greatest_stock_volume_ticker = 0 'Place holder value for the greatest stock volume ticker
+
+For i = 1 To RowCountN 'creating iterations for every row in column N
+
+    '--- Conditional Formatting ---
+    With Cells(i + 1, "M").FormatConditions.Add(xlCellValue, xlLess, "=0") 'Creating the conditional statement to highlight all cells with a value <0 to red
+        .Interior.Color = -16776961 'colour red
+        .StopIfTrue = False
+    End With
+            
+    With Cells(i + 1, "M").FormatConditions.Add(xlCellValue, xlGreater, "=0") 'Creating the conditional statement to highlight all cells with a value >0 to green
+            .Interior.Color = -16744448 'colour green
+            .StopIfTrue = False
+    End With
+        '------------------------------
+    
+
+    
+    If Cells(i + 1, "N").Value > greatest_value Then 'An if statement to compare the greatest value of % to other % values, and declaring the greatest % change for all tickers
+                
+        greatest_value_ticker = Cells(i + 1, "I").Value
+        greatest_value = Cells(i + 1, "N").Value
+                
+    End If
+            
+    If Cells(i + 1, "N").Value < lowest_value Then 'An if statement to compare the lowest value of % to other % values, and declaring the lowest % change for all tickers
+            
+        lowest_value_ticker = Cells(i + 1, "I").Value
+        lowest_value = Cells(i + 1, "N").Value
+               
+    End If
+    
+    If Cells(i + 1, "J").Value > greatest_stock_volume Then 'An if statement to compare the stock volume value to other stock volume values, and declaring the largest stock volume value for all tickers
+            
+        greatest_stock_volume_ticker = Cells(i + 1, "I").Value
+        greatest_stock_volume = Cells(i + 1, "J").Value
+               
+    End If
+    
+Next i
+
+'--- Appending all values to their appropriate cell positions on the worksheet.---
+
+Cells(2, "Q").Value = greatest_value_ticker
+Cells(2, "R").Value = greatest_value
+Cells(3, "Q").Value = lowest_value_ticker
+Cells(3, "R").Value = lowest_value
+Cells(4, "Q").Value = greatest_stock_volume_ticker
+Cells(4, "R").Value = greatest_stock_volume
+    
+
+'--- Next Worksheet Looop ---
+Next ws 'Next work sheet
+'----------------------------
+
+End Sub
